@@ -1,13 +1,40 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace AoC_2021 {
     class Program {
-        static void Main(string[] args) {
-            var problemName = args.Any() ? args.First() : string.Empty;
+        static async Task Main(string[] args) {
+            var command = args.Any() ? args.First() : "run";
 
+            switch (command) { 
+                case "run":
+                    RunProblems(args.Skip(1).FirstOrDefault()); 
+                    return;
+
+                case "download":
+                    if (!int.TryParse(args.Skip(1).First(), out var day)) {
+                        Console.WriteLine("Did you mean to download input for day {DateTime.Now:dd} (y/n)?");
+                        if (Console.ReadKey().Key == ConsoleKey.Y) {
+                            day = DateTime.Now.Day;
+                        } else {
+                            throw new ArgumentNullException("args[1]", "Please specify what day");
+                        }
+                    }
+
+                    await DownloadAsync(day, int.Parse(args.Skip(2).FirstOrDefault()));
+                    return;
+                default: 
+                    throw new ArgumentOutOfRangeException("args[0]", $"Cannot find sub-command {args.FirstOrDefault()}");
+            }
+        }
+
+        static void RunProblems(string problemName) {
             var problems = typeof(Program)
                                    .Assembly
                                    .GetTypes()
@@ -24,6 +51,25 @@ namespace AoC_2021 {
                 var (secondPart, elapsedMillisecondsPt2) = Time(() => problem.Part2());
                 if (!string.IsNullOrWhiteSpace(secondPart))
                     Console.WriteLine($"{problem.Name} Part 2: {secondPart} ({elapsedMillisecondsPt2}ms)");
+            }
+        }
+
+        static async Task DownloadAsync(int day, int? year = null) {
+            var inputUrl = $"https://adventofcode.com/{year ?? DateTime.UtcNow.Year}/day/{day}/input";
+            var http = new HttpClient();
+
+            Console.WriteLine($"Fetching input from {inputUrl}");
+            var response = await http.GetAsync(inputUrl);
+            if (response.IsSuccessStatusCode) {
+                if (!Directory.Exists($"./day{day}/")) {
+                    Directory.CreateDirectory($"./day{day}");
+                }
+                
+                await File.WriteAllTextAsync($"./day{day}/input.txt", await response.Content.ReadAsStringAsync());
+
+                Console.WriteLine($"Input saved at {$"./day{day}/input.txt"}");
+            } else {
+                Console.WriteLine($"Download from {inputUrl} failed: {(int)response.StatusCode} - {response.ReasonPhrase}");
             }
         }
 
