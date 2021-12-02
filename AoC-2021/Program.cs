@@ -27,17 +27,18 @@ namespace AoC_2021 {
             }
         }
 
-        static (string, long elapsedMilliseconds) Time(Func<string> block) {
+        static (string result, long elapsedMilliseconds) Time<T>(Func<T> block) {
             try {
                 sw.Start();
                 var result = block.Invoke();
                 sw.Stop();
-                return (result, sw.ElapsedMilliseconds);
+                return (result.ToString(), sw.ElapsedMilliseconds);
             }
             catch (Exception e) {
-                 return (e.Message, sw.ElapsedMilliseconds);
+                if (sw.IsRunning) sw.Stop();
+                return (e.Message, sw.ElapsedMilliseconds);
             }
-             finally {
+            finally {
                 sw.Reset();
             }
         }
