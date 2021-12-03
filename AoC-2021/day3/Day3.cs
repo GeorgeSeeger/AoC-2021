@@ -27,20 +27,21 @@ namespace AoC_2021 {
                     if (oxygenRatings.Count() == oxygenRatings.Count(l => l[i] == '1') * 2) {
                         oxygenRatings = oxygenRatings.Where(l => l[i] == '1').ToList();
                     } else {
-                        oxygenRatings = oxygenRatings.Where(l => l[i] == MostCommonAtPosition(i, oxygenRatings)).ToList();
+                        var find = MostCommonAtPosition(i, oxygenRatings);
+                        oxygenRatings = oxygenRatings.Where(l => l[i] == find).ToList();
                     }
                 }
                 if (co2Ratings.Count() > 1) {
                     if (co2Ratings.Count() == co2Ratings.Count(l => l[i] == '1') * 2) {
                         co2Ratings = co2Ratings.Where(l => l[i] == '0').ToList();
                     } else {
-                        co2Ratings = co2Ratings.Where(l => l[i] != MostCommonAtPosition(i, co2Ratings)).ToList();
+                        var notFind = MostCommonAtPosition(i, co2Ratings);
+                        co2Ratings = co2Ratings.Where(l => l[i] != notFind).ToList();
                     }
-
                 }
             }
-            
-            return new[] { oxygenRatings, co2Ratings}
+
+            return new[] { oxygenRatings, co2Ratings }
                     .Select(l => Convert.ToInt32(l.First(), 2))
                     .Aggregate((i, j) => i * j)
                     .ToString();
