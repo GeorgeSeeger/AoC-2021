@@ -24,27 +24,21 @@ namespace AoC_2021 {
                 Action<(int x, int y)> AddOrIncrement = c => {
                     if (!dict.TryAdd(c, 1)) dict[c]++;
                 };
-                if (line.X1 == line.X2) {
-                    for (var y = Math.Min(line.Y1, line.Y2); y <= Math.Max(line.Y1, line.Y2); y++) 
-                        AddOrIncrement((x: line.X1, y));
-                } else {
+                for (var y = Math.Min(line.Y1, line.Y2); y <= Math.Max(line.Y1, line.Y2); y++) 
                     for (var x = Math.Min(line.X1, line.X2); x <= Math.Max(line.X1, line.X2); x++)
-                        AddOrIncrement((x, y: line.Y1));
-                }
+                        AddOrIncrement((x, y));
+                        
                 return dict;
             });
         }
 
         private (int X1, int Y1, int X2, int Y2)[] ParseLines(string[] input) {
-            return input.Select(l => l.Split(" -> ").SelectMany(s => s.Split(","))
-            .Select(i => int.Parse(i))
-            .Aggregate((X1: -1, Y1: -1, X2: -1, Y2: -1), (pos, j) => {
-                if (pos.X1 == -1) pos.X1 = j;
-                else if (pos.Y1 == -1) pos.Y1 = j;
-                else if (pos.X2 == -1) pos.X2 = j;
-                else pos.Y2 = j;
-                return pos;
-            })).ToArray();
+            return input.Select(l => l.Split(" -> ")
+                                      .SelectMany(s => s.Split(","))
+                                      .Select(i => int.Parse(i))
+                                      .ToArray())
+            .Select(line => (X1: line[0], Y1: line[1], X2: line[2], Y2: line[3]))
+            .ToArray();
         }
 
         public string Part2() {
