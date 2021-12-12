@@ -21,23 +21,20 @@ namespace AoC_2021 {
 
         private Dictionary<string, List<string>> Parse(string filename) {
             var input = File.ReadAllLines(filename);
-            var dict = new Dictionary<string, List<string>>();
-            foreach (var line in input) {
-                var pair = line.Split("-");
-                var caveOne = pair.First();
-                var caveTwo = pair.Last();
-                if (dict.TryGetValue(caveOne, out var links)) links.Add(caveTwo);
-                else dict.Add(caveOne, new List<string>() { caveTwo });
-                if (dict.TryGetValue(caveTwo, out var linksTwo)) linksTwo.Add(caveOne);
-                else dict.Add(caveTwo, new List<string> { caveOne });
-            }
-            return dict;
+            return input.SelectMany(line => new[] { line.Split("-"), line.Split("-").Reverse() })
+                        .Aggregate(new Dictionary<string, List<string>>(), 
+                        (dict, caves) => {
+                            if (dict.TryGetValue(caves.First(), out var linked)) linked.Add(caves.Last());
+                            else dict.Add(caves.First(), new List<string>{ caves.Last() });
+
+                            return dict;
+                        });
         }
 
         private HashSet<string> FindPathsSmallsOnce(Dictionary<string, List<string>> graph, HashSet<string> previousPaths, string currentPath, string from) {
-            if (IsSmallCave.IsMatch(from) && currentPath.Contains($",{from}")) return previousPaths;
+            if (IsSmallCave.IsMatch(from) && currentPath.Contains(from)) return previousPaths;
 
-            var path = currentPath + (string.IsNullOrEmpty(currentPath) ? "" : ",") + from;
+            var path = currentPath + "," + from;
             if (previousPaths.Contains(path)) return previousPaths;
             previousPaths.Add(path);
 
@@ -51,36 +48,28 @@ namespace AoC_2021 {
             return previousPaths;
         }
 
-        private Regex IsSmallCave = new Regex("^[a-z]+$");
+        private Regex IsSmallCave = new Regex("^[a-z]{1,2}$");
 
         public string Part2() {
             var input = Parse("./day12/input.txt");
             
-            var paths = FindPathsOneSmallTwice(input, new HashSet<string>(), "", "start");
-
-            var answer = paths.Count(s => s.EndsWith("end"));
-
-            return answer.ToString();
+            var pathsCount = CountPathsSmallsTwice(input, new HashSet<string>(), ("", false), "start");
+            return pathsCount.ToString();
         }
 
-        private HashSet<string> FindPathsOneSmallTwice(Dictionary<string, List<string>> graph, HashSet<string> previousPaths, string currentPath, string from) {
+        private int CountPathsSmallsTwice(Dictionary<string, List<string>> graph, HashSet<string> previousPaths, (string path, bool doubledUp) currentPath, string from) {
             if (IsSmallCave.IsMatch(from) 
-                && currentPath.Contains($",{from}")
-                && currentPath.Split(",").GroupBy(s => s).Any(g => g.Key.Length <= 2 && IsSmallCave.IsMatch(g.Key) && g.Count() == 2))
-                return previousPaths;
+                && currentPath.path.Contains(from)
+                && currentPath.doubledUp)
+                return 0;
 
-            var path = currentPath + (string.IsNullOrEmpty(currentPath) ? "" : ",") + from;
-            if (previousPaths.Contains(path)) return previousPaths;
+            var path = currentPath.path + "," + from;
+            if (previousPaths.Contains(path)) return 0;
             previousPaths.Add(path);
 
-            if (from == "end") return previousPaths;
-            foreach (var next in graph[from]) {
-                if (next == "start") continue;
-
-                FindPathsOneSmallTwice(graph, previousPaths, path, next);
-            }
-
-            return previousPaths;
+            if (from == "end") return 1;
+            var doubledUp = currentPath.doubledUp || IsSmallCave.IsMatch(from) && currentPath.path.Contains(from);
+            return graph[from].Where(s => s != "start").Sum(next => CountPathsSmallsTwice(graph, previousPaths, (path, doubledUp), next));
         }
     }
 }
