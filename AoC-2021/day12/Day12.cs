@@ -12,11 +12,9 @@ namespace AoC_2021 {
         public string Part1() {
             var input = Parse("./day12/input.txt");
 
-            var paths = FindPathsSmallsOnce(input, new HashSet<string>(), "", "start");
+            var paths = CountPathsToEnd(input, new HashSet<string>(), "", "start");
 
-            var answer = paths.Count(s => s.EndsWith("end"));
-
-            return answer.ToString();
+            return paths.ToString();
         }
 
         private Dictionary<string, List<string>> Parse(string filename) {
@@ -31,45 +29,31 @@ namespace AoC_2021 {
                         });
         }
 
-        private HashSet<string> FindPathsSmallsOnce(Dictionary<string, List<string>> graph, HashSet<string> previousPaths, string currentPath, string from) {
-            if (IsSmallCave.IsMatch(from) && currentPath.Contains(from)) return previousPaths;
-
-            var path = currentPath + "," + from;
-            if (previousPaths.Contains(path)) return previousPaths;
-            previousPaths.Add(path);
-
-            if (from == "end") return previousPaths;
-            foreach (var next in graph[from]) {
-                if (next == "start") continue;
-
-                FindPathsSmallsOnce(graph, previousPaths, path, next);
-            }
-
-            return previousPaths;
-        }
-
-        private Regex IsSmallCave = new Regex("^[a-z]{1,2}$");
-
         public string Part2() {
             var input = Parse("./day12/input.txt");
             
-            var pathsCount = CountPathsSmallsTwice(input, new HashSet<string>(), ("", false), "start");
+            var pathsCount = CountPathsToEnd(input, new HashSet<string>(), "", "start", allowSmallCavesTwice: true);
+            
             return pathsCount.ToString();
         }
 
-        private int CountPathsSmallsTwice(Dictionary<string, List<string>> graph, HashSet<string> previousPaths, (string path, bool doubledUp) currentPath, string from) {
-            if (IsSmallCave.IsMatch(from) 
-                && currentPath.path.Contains(from)
-                && currentPath.doubledUp)
+        private int CountPathsToEnd(Dictionary<string, List<string>> graph, HashSet<string> previousPaths, string currentPath, string from, bool allowSmallCavesTwice = false) {
+            if (!allowSmallCavesTwice 
+                && IsSmallCave(from)
+                && currentPath.Contains(from))
                 return 0;
 
-            var path = currentPath.path + "," + from;
+            var path = currentPath + "," + from;
             if (previousPaths.Contains(path)) return 0;
             previousPaths.Add(path);
 
             if (from == "end") return 1;
-            var doubledUp = currentPath.doubledUp || IsSmallCave.IsMatch(from) && currentPath.path.Contains(from);
-            return graph[from].Where(s => s != "start").Sum(next => CountPathsSmallsTwice(graph, previousPaths, (path, doubledUp), next));
+            var allowSmallCavesNow = allowSmallCavesTwice && (!IsSmallCave(from) || !currentPath.Contains(from));
+            return graph[from].Where(s => s != "start").Sum(next => CountPathsToEnd(graph, previousPaths, path, next, allowSmallCavesNow));
+        }
+
+        private bool IsSmallCave(string from) {
+            return from.Length <= 2 && char.IsLower(from[0]);
         }
     }
 }
