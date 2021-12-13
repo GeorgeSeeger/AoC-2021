@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace AoC_2021 {
     class Program {
@@ -14,6 +15,7 @@ namespace AoC_2021 {
                                    .Where(t => t.GetInterfaces().Any(it => it == typeof(IProblem)))
                                    .Select(t => (IProblem)Activator.CreateInstance(t))
                                    .Where(p => string.IsNullOrWhiteSpace(problemName) ? true : string.Equals(p.Name, problemName, StringComparison.InvariantCultureIgnoreCase))
+                                   .OrderBy(p => int.Parse(new Regex("\\D").Replace(p.Name, "")))
                                    .ToArray();
 
             foreach (var problem in problems) {

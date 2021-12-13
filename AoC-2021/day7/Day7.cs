@@ -18,7 +18,7 @@ namespace AoC_2021 {
             var input = File.ReadAllLines("./day7/input.txt").First().Split(",").Select(int.Parse).ToArray();
             var fuelCosts = input.Select((_, dest) => input.Select(pos => {
                 var distance = Math.Abs(dest - pos);
-                return (int)((distance + 1) * (distance / 2M));
+                return distance * (distance + 1) / 2;
             }).Sum());
 
             return fuelCosts.Min().ToString();
